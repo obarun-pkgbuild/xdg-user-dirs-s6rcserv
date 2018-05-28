@@ -38,9 +38,6 @@ prepare(){
 			sed -i "s:base:${pkgbase}:g" user/rc/bundle-*/contents
 		fi
 		find user/rc/ -type d -name 'base-*' | rename base "${pkgbase}" user/rc/* 
-		for i in user/rc/*-log/logd user/rc/*-log/run; do
-			sed -i "s:base:${pkgbase}:g" $i 
-		done
 	fi
 }
 package(){
