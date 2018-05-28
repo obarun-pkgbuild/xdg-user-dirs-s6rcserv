@@ -1,4 +1,4 @@
-#!/usr/local/bin/execlineb -P
+#!@BINDIR_EXECLINE@/execlineb -P
 fdmove -c 2 1
 exec -c
 /usr/bin/xdg-user-dirs-update

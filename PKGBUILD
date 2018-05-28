@@ -1,29 +1,51 @@
 # Maintainer: Eric Vidal <eric@obarun.org>
 
-pkgname=xdg-user-dirs-s6rcserv
-pkgver=0.1
-pkgrel=2
-pkgdesc="xdg-user-dirs service for"
+pkgbase=xdg-user-dirs
+_depends=xdg-user-dirs
+pkgname="${pkgbase}"-s6rcserv
+pkgver=0.2
+pkgrel=1
+pkgdesc="${pkgbase} service for s6-rc"
 arch=(x86_64)
-license=('beerware')
-depends=('xdg-user-dirs' 's6' 's6-rc' 's6-boot')
+license=('ISC')
+depends=("${_depends}" 's6' 's6-rc' 's6-boot' 's6opts')
+makedepends=('util-linux' 'findutils')
 conflicts=()
-source=('xdg-user-dirs.oneshot.dependencies'	
-		'xdg-user-dirs.oneshot.type'
-		'xdg-user-dirs.oneshot.up'		
-		'LICENSE')
-md5sums=('68b329da9893e34099c7d8ad5cb9c940'
-         '85bceea1fb94d4166f24496dc40a35e6'
-         '95daf8ca4cd18ccf230e77de914ded6b'
-         '191a37ae657aa17e37e75d0242865dba')
+source=("$pkgname::git+https://github.com/obarun-pkgbuild/${pkgname}#branch=master")
+md5sums=('SKIP')
 validpgpkeys=('6DD4217456569BA711566AC7F06E8FDE7B45DAAC') # Eric Vidal
 
-package() {
+prepare(){
+	cd "${pkgname}"
 	
-	# oneshot
-	install -Dm 0644 "$srcdir/xdg-user-dirs.oneshot.dependencies" "$pkgdir/etc/s6-serv/available/rc/xdg-user-dirs-oneshot/dependencies"
-	install -Dm 0644 "$srcdir/xdg-user-dirs.oneshot.type" "$pkgdir/etc/s6-serv/available/rc/xdg-user-dirs-oneshot/type"
-	install -Dm 0644 "$srcdir/xdg-user-dirs.oneshot.up" "$pkgdir/etc/s6-serv/available/rc/xdg-user-dirs-oneshot/up"
+	sed -i "s:base:${pkgbase}:g" Makefile
+	name_cap=( "${pkgbase[*]^}" )
+	exist=$(find -maxdepth 1 -name 'base-*' -type d)
+	if [[ -n "${exist}" ]]; then
+		if [[ -d bundle-base ]]; then
+			find -type d -name 'bundle-base' | rename base "${name_cap}" bundle-base 
+			sed -i "s:base:${pkgbase}:g" bundle-*/contents
+		fi
+		find -type d -name 'base-*' | rename base "${pkgbase}" * 
+		for i in *-log/logd *-log/run; do
+			sed -i "s:base:${pkgbase}:g" $i 
+		done
+	fi
+	# user dir
+	if [[ -d user ]]; then
+		if [[ -d user/rc/bundle-base ]]; then
+			find user/rc/ -type d -name 'bundle-base' | rename base "${name_cap}" user/rc/bundle-base 
+			sed -i "s:base:${pkgbase}:g" user/rc/bundle-*/contents
+		fi
+		find user/rc/ -type d -name 'base-*' | rename base "${pkgbase}" user/rc/* 
+		for i in user/rc/*-log/logd user/rc/*-log/run; do
+			sed -i "s:base:${pkgbase}:g" $i 
+		done
+	fi
+}
+package(){
+	cd "${pkgname}"
 	
-	install -Dm 0644 "$srcdir/LICENSE" "$pkgdir/usr/share/licenses/xdg-user-dirs-s6rcserv/LICENSE"
+	make DESTDIR="$pkgdir" install
+	
 }
